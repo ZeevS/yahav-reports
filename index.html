@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>דיווח שעות - יהב</title>
+  <style>
+    :root {
+      --bg-main: #121212;
+      --bg-card: #1E1E1E;
+      --bg-input: #282828;
+      --border-color: #383838;
+      --accent-green: #00E676;
+      --accent-orange: #FFB300;
+      --text-main: #FFFFFF;
+      --text-secondary: #B0B0B0;
+      --text-muted: #757575;
+      --error-red: #FF5252;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 75px;
+    }
+
+    /* סרגל כותרת עליון */
+    header {
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-badge {
+      background: var(--accent-green);
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 900;
+      padding: 2px 6px;
+    }
+
+    .worker-badge {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-green);
+      background: rgba(0, 230, 118, 0.1);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      padding: 4px 8px;
+    }
+
+    /* פדינג חיצוני לאפליקציה: 8px */
+    main {
+      padding: 8px;
+      flex: 1;
+      max-width: 550px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* כרטיסייה אחת אחודה לטופס */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      margin-bottom: 4px;
+    }
+
+    .section-divider {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin: 8px 0 6px 0;
+    }
+
+    .section-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* מרווח בין שדות: 4px */
+    .form-group {
+      margin-bottom: 4px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    /* מעטפת שדה קבועה ומעובה - גובה 48px */
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+      height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* עיבוי כל שדות הקלט לגובה 48px */
+    input, select {
+      width: 100%;
+      height: 48px;
+      min-height: 48px;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.98rem;
+      padding: 0 12px;
+      padding-left: 38px;
+      outline: none;
+      border-radius: 0;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      line-height: normal;
+    }
+
+    /* שדות Dropdown - מניעת התמזגות עם כפתור ה-X */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%23B0B0B0'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 12px center;
+      padding-left: 60px;
+      cursor: pointer;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent-green);
+    }
+
+    /* פתיחת בורר תאריך ושעה בלחיצה בכל שטח השדה */
+    input[type="date"], input[type="time"] {
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* כפתור ה-X לניקוי */
+    .btn-clear {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      background-color: rgba(255, 255, 255, 0.12);
+      color: var(--text-secondary);
+      border: none;
+      border-radius: 0;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
+    .input-wrapper select ~ .btn-clear {
+      left: 32px;
+    }
+
+    .btn-clear:active {
+      background-color: var(--error-red);
+      color: #fff;
+    }
+
+    /* חלוקה שווה ומדויקת 50%-50% לשדות בשורה */
+    .row-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      margin-top: 4px;
+      width: 100%;
+    }
+
+    .btn {
+      width: 100%;
+      height: 50px;
+      font-size: 1rem;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-green);
+      color: #000;
+    }
+
+    .btn-primary:active {
+      background-color: #00c853;
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-input);
+      color: var(--text-main);
+      border: 1px dashed var(--border-color);
+      height: 44px;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* סרגל ניווט תחתון */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      height: 60px;
+      z-index: 100;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      gap: 4px;
+      border-radius: 0;
+    }
+
+    .nav-item.active {
+      color: var(--accent-green);
+      border-top: 2px solid var(--accent-green);
+    }
+
+    /* כרטיסיות היסטוריה */
+    .history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      margin-bottom: 4px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 6px;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 8px;
+    }
+
+    .badge-pending {
+      background: rgba(255, 179, 0, 0.15);
+      color: var(--accent-orange);
+      border: 1px solid var(--accent-orange);
+    }
+
+    .badge-approved {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--accent-green);
+      border: 1px solid var(--accent-green);
+    }
+
+    .history-row {
+      font-size: 0.88rem;
+      color: var(--text-main);
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+
+    .history-label {
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .time-range {
+      direction: ltr;
+      display: inline-block;
+      unicode-bidi: isolate;
+      font-weight: 700;
+      margin-right: 6px;
+      color: var(--text-main);
+    }
+
+    .btn-edit-pending {
+      background: var(--bg-input);
+      color: var(--accent-orange);
+      border: 1px solid var(--accent-orange);
+      height: 42px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 8px;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #setup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000000;
+      z-index: 1000;
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    #toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--accent-green);
+      color: #000;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 12px 20px;
+      z-index: 2000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.2);
+      border-top: 3px solid #000;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast"></div>
+
+  <!-- מסך הגדרה ראשוני קבוע למכשיר -->
+  <div id="setup-overlay" style="display: none;">
+    <div class="card" style="border: 1px solid var(--accent-green);">
+      <div class="section-title" style="margin-bottom: 8px;">
+        <span>הגדרת מכשיר אישי</span>
+        <span class="brand-badge">יהב</span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+        ברוך הבא! בחר את שמך ואת הרכב שלך. הגדרה זו הינה <strong>קבועה ואישית</strong> למכשיר זה.
+      </p>
+
+      <div class="form-group">
+        <label for="setup-worker-select">בחר עובד (זהות קבועה):</label>
+        <div class="input-wrapper">
+          <select id="setup-worker-select">
+            <option value="">-- טוען רשימת עובדים... --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 8px;">
+        <label for="setup-vehicle-select">בחר רכב עיקרי:</label>
+        <div class="input-wrapper">
+          <select id="setup-vehicle-select">
+            <option value="">-- טוען רשימת רכבים... --</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-save-setup" class="btn btn-primary" style="margin-top: 14px;" onclick="savePersonalSetup()">
+        שמור והתחל לעבוד ➔
+      </button>
+    </div>
+  </div>
+
+  <header>
+    <div class="brand-title">
+      <span class="brand-badge">יהב</span>
+      <span>דיווח שעות</span>
+    </div>
+    <div id="header-worker-name" class="worker-badge">...</div>
+  </header>
+
+  <main>
+    <!-- כרטיסייה אחת אחודה לכל הטופס -->
+    <section id="tab-report">
+      <form id="report-form" class="card" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="report-id" value="">
+
+        <div class="row-2" style="margin-top: 0;">
+          <div class="form-group">
+            <label for="report-date">תאריך:</label>
+            <div class="input-wrapper">
+              <input type="date" id="report-date" required>
+              <button type="button" class="btn-clear" onclick="clearField('report-date')">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="report-vehicle">רכב:</label>
+            <div class="input-wrapper">
+              <select id="report-vehicle" required></select>
+              <button type="button" class="btn-clear" onclick="clearField('report-vehicle')">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- משימה 1 -->
+        <div class="section-title">
+          <span>משימה 1</span>
+        </div>
+        <div class="form-group">
+          <label for="report-task1">סוג משימה:</label>
+          <div class="input-wrapper">
+            <select id="report-task1" required></select>
+            <button type="button" class="btn-clear" onclick="clearField('report-task1')">✕</button>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="form-group">
+            <label for="report-start1">התחלה:</label>
+            <div class="input-wrapper">
+              <input type="time" id="report-start1" required>
+              <button type="button" class="btn-clear" onclick="clearField('report-start1')">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="report-end1">סיום:</label>
+            <div class="input-wrapper">
+              <input type="time" id="report-end1" required>
+              <button type="button" class="btn-clear" onclick="clearField('report-end1')">✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 4px;">
+          <label for="report-notes1">הערות / מיקום:</label>
+          <div class="input-wrapper">
+            <input type="text" id="report-notes1" placeholder="הערות או מיקום פעילות">
+            <button type="button" class="btn-clear" onclick="clearField('report-notes1')">✕</button>
+          </div>
+        </div>
+
+        <!-- משימה 2 -->
+        <div id="task2-container" style="display: none;">
+          <div class="section-divider"></div>
+          <div class="section-title">
+            <span>משימה 2</span>
+            <span style="font-size: 0.75rem; color: var(--error-red); cursor: pointer;" onclick="toggleTask2(false)">הסר ✕</span>
+          </div>
+          <div class="form-group">
+            <label for="report-task2">סוג משימה:</label>
+            <div class="input-wrapper">
+              <select id="report-task2"></select>
+              <button type="button" class="btn-clear" onclick="clearField('report-task2')">✕</button>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label for="report-start2">התחלה:</label>
+              <div class="input-wrapper">
+                <input type="time" id="report-start2">
+                <button type="button" class="btn-clear" onclick="clearField('report-start2')">✕</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="report-end2">סיום:</label>
+              <div class="input-wrapper">
+                <input type="time" id="report-end2">
+                <button type="button" class="btn-clear" onclick="clearField('report-end2')">✕</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 4px;">
+            <label for="report-notes2">הערות / מיקום:</label>
+            <div class="input-wrapper">
+              <input type="text" id="report-notes2" placeholder="הערות או מיקום פעילות">
+              <button type="button" class="btn-clear" onclick="clearField('report-notes2')">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btn-add-task2" class="btn btn-secondary" onclick="toggleTask2(true)">
+          + הוסף משימה נוספת
+        </button>
+
+        <button type="submit" id="btn-submit" class="btn btn-primary" style="margin-top: 6px;">
+          <span id="btn-text">שלח דיווח לאישור ➔</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- טאב 2: ההיסטוריה שלי -->
+    <section id="tab-history" style="display: none;">
+      <div id="history-loading" style="text-align: center; padding: 24px; color: var(--text-muted);">
+        <div class="spinner" style="border-top-color: var(--accent-green);"></div>
+        <p style="margin-top: 8px;">טוען היסטוריית דיווחים...</p>
+      </div>
+      <div id="history-list"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-report" onclick="switchTab('report')">
+      <span>דיווח יומי</span>
+    </button>
+    <button class="nav-item" id="nav-history" onclick="switchTab('history')">
+      <span>ההיסטוריה שלי</span>
+    </button>
+  </nav>
+
+  <script>
+    // ** הדבק כאן את כתובת ה-Web App URL מ-Google Apps Script (המסתיימת ב-/exec) **
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhEGFG_BvPxsNd3cmfxOgs-LUTxDRk_AA-4b_YB9XL9PSh60MiC3MmgLrALe6Mmb0c/exec";
+
+    let currentWorker = localStorage.getItem("yahav_worker_name") || "";
+    let savedVehicle = localStorage.getItem("yahav_worker_vehicle") || "";
+    let appData = { employees: [], vehicles: [], tasks: [] };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById("report-date").value = todayStr;
+
+      if (currentWorker) {
+        document.getElementById("header-worker-name").textContent = currentWorker;
+      }
+
+      document.querySelectorAll('input[type="date"], input[type="time"]').forEach(input => {
+        input.addEventListener('click', function() {
+          if (typeof this.showPicker === 'function') {
+            try { this.showPicker(); } catch (e) {}
+          }
+        });
+      });
+
+      document.addEventListener('input', updateClearButtons);
+      document.addEventListener('change', updateClearButtons);
+
+      loadInitialServerData();
+    });
+
+    function showToast(msg, duration = 3000) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.style.display = "block";
+      setTimeout(() => { toast.style.display = "none"; }, duration);
+    }
+
+    function updateClearButtons() {
+      document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+        const input = wrapper.querySelector('input, select');
+        const clearBtn = wrapper.querySelector('.btn-clear');
+        if (input && clearBtn) {
+          if (input.value && input.value.trim() !== '') {
+            clearBtn.style.display = 'flex';
+          } else {
+            clearBtn.style.display = 'none';
+          }
+        }
+      });
+    }
+
+    function clearField(fieldId) {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.value = '';
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+        updateClearButtons();
+        field.focus();
+      }
+    }
+
+    function loadInitialServerData() {
+      fetch(`${SCRIPT_URL}?action=get_initial_data`)
+        .then(res => res.json())
+        .then(res => {
+          appData = res.data || res;
+          populateDropdowns();
+
+          if (!currentWorker) {
+            document.getElementById("setup-overlay").style.display = "flex";
+          }
+          updateClearButtons();
+        })
+        .catch(err => {
+          showToast("שגיאה בטעינת נתונים: " + err.message);
+        });
+    }
+
+    function populateDropdowns() {
+      const setupWorkerSelect = document.getElementById("setup-worker-select");
+      setupWorkerSelect.innerHTML = '<option value="">-- בחר את שמך --</option>';
+      (appData.employees || []).forEach(emp => {
+        setupWorkerSelect.innerHTML += `<option value="${emp}">${emp}</option>`;
+      });
+
+      const setupVehicleSelect = document.getElementById("setup-vehicle-select");
+      const reportVehicle = document.getElementById("report-vehicle");
+      setupVehicleSelect.innerHTML = '<option value="">-- בחר רכב ברירת מחדל --</option>';
+      reportVehicle.innerHTML = '';
+
+      (appData.vehicles || []).forEach(veh => {
+        setupVehicleSelect.innerHTML += `<option value="${veh}">${veh}</option>`;
+        reportVehicle.innerHTML += `<option value="${veh}">${veh}</option>`;
+      });
+
+      if (savedVehicle) {
+        reportVehicle.value = savedVehicle;
+      }
+
+      const task1Select = document.getElementById("report-task1");
+      const task2Select = document.getElementById("report-task2");
+      task1Select.innerHTML = '<option value="">-- בחר משימה --</option>';
+      task2Select.innerHTML = '<option value="">-- בחר משימה --</option>';
+
+      (appData.tasks || []).forEach(t => {
+        task1Select.innerHTML += `<option value="${t}">${t}</option>`;
+        task2Select.innerHTML += `<option value="${t}">${t}</option>`;
+      });
+      updateClearButtons();
+    }
+
+    function savePersonalSetup() {
+      const selectedWorker = document.getElementById("setup-worker-select").value.trim();
+      const selectedVehicle = document.getElementById("setup-vehicle-select").value.trim();
+
+      if (!selectedWorker) {
+        alert("חובה לבחור את שמך מהרשימה");
+        return;
+      }
+
+      localStorage.setItem("yahav_worker_name", selectedWorker);
+      if (selectedVehicle) {
+        localStorage.setItem("yahav_worker_vehicle", selectedVehicle);
+      }
+
+      currentWorker = selectedWorker;
+      savedVehicle = selectedVehicle;
+
+      document.getElementById("header-worker-name").textContent = currentWorker;
+      if (savedVehicle) {
+        document.getElementById("report-vehicle").value = savedVehicle;
+      }
+
+      document.getElementById("setup-overlay").style.display = "none";
+      updateClearButtons();
+      showToast("המכשיר הוגדר בהצלחה עבור " + currentWorker);
+    }
+
+    function switchTab(tab) {
+      if (tab === 'report') {
+        document.getElementById("tab-report").style.display = "block";
+        document.getElementById("tab-history").style.display = "none";
+        document.getElementById("nav-report").classList.add("active");
+        document.getElementById("nav-history").classList.remove("active");
+      } else {
+        document.getElementById("tab-report").style.display = "none";
+        document.getElementById("tab-history").style.display = "block";
+        document.getElementById("nav-report").classList.remove("active");
+        document.getElementById("nav-history").classList.add("active");
+        loadWorkerHistory();
+      }
+    }
+
+    function toggleTask2(show) {
+      const container = document.getElementById("task2-container");
+      const btnAdd = document.getElementById("btn-add-task2");
+      if (show) {
+        container.style.display = "block";
+        btnAdd.style.display = "none";
+      } else {
+        container.style.display = "none";
+        btnAdd.style.display = "block";
+        clearField("report-task2");
+        clearField("report-start2");
+        clearField("report-end2");
+        clearField("report-notes2");
+      }
+      updateClearButtons();
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      if (!currentWorker) {
+        alert("המכשיר אינו מוגדר. רענן ובחר את שמך.");
+        return;
+      }
+
+      const submitBtn = document.getElementById("btn-submit");
+      const btnText = document.getElementById("btn-text");
+      submitBtn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> שולח דיווח...';
+
+      const chosenVehicle = document.getElementById("report-vehicle").value;
+      localStorage.setItem("yahav_worker_vehicle", chosenVehicle);
+
+      const rawDate = document.getElementById("report-date").value;
+      let formattedDate = rawDate;
+      if (rawDate.includes("-")) {
+        const parts = rawDate.split("-");
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      const payload = {
+        action: "submit_pending",
+        id: document.getElementById("report-id").value || null,
+        date: formattedDate,
+        name: currentWorker,
+        vehicle: chosenVehicle,
+        task1: document.getElementById("report-task1").value,
+        start1: document.getElementById("report-start1").value,
+        end1: document.getElementById("report-end1").value,
+        notes1: document.getElementById("report-notes1").value,
+        task2: document.getElementById("report-task2").value,
+        start2: document.getElementById("report-start2").value,
+        end2: document.getElementById("report-end2").value,
+        notes2: document.getElementById("report-notes2").value
+      };
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        submitBtn.disabled = false;
+        btnText.textContent = "שלח דיווח לאישור ➔";
+
+        if (res.status === "success" || res.success) {
+          showToast(res.updated ? "הדיווח עודכן בהצלחה!" : "הדיווח נשלח בהצלחה למנהל!");
+          resetForm();
+        } else {
+          alert("שגיאה: " + (res.message || "לא ניתן היה לשלוח"));
+        }
+      })
+      .catch(err => {
+        submitBtn.disabled = false;
+        btnText.textContent = "שלח דיווח לאישור ➔";
+        alert("שגיאת תקשורת: " + err.message);
+      });
+    }
+
+    function resetForm() {
+      document.getElementById("report-id").value = "";
+      clearField("report-task1");
+      clearField("report-start1");
+      clearField("report-end1");
+      clearField("report-notes1");
+      toggleTask2(false);
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById("report-date").value = todayStr;
+      updateClearButtons();
+    }
+
+    function loadWorkerHistory() {
+      const listContainer = document.getElementById("history-list");
+      const loading = document.getElementById("history-loading");
+
+      loading.style.display = "block";
+      listContainer.innerHTML = "";
+
+      fetch(`${SCRIPT_URL}?action=get_worker_history&name=${encodeURIComponent(currentWorker)}`)
+        .then(res => res.json())
+        .then(res => {
+          loading.style.display = "none";
+          const history = res.data || res;
+          if (!history || history.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">אין דיווחים קודמים להצגה</p>';
+            return;
+          }
+
+          history.forEach(item => {
+            const isPending = item.status === "PENDING";
+            const badgeClass = isPending ? "badge-pending" : "badge-approved";
+            const badgeText = isPending ? "ממתין לאישור" : "אושר";
+
+            let time1 = (item.start1 || item.end1) ? `<span class="time-range">[${item.start1} - ${item.end1}]</span>` : '';
+            let task1Html = `
+              <div class="history-row">
+                <span class="history-label">משימה 1:</span>
+                <strong>${item.task1}</strong>
+                ${time1}
+              </div>
+            `;
+            let notes1Html = item.notes1 ? `
+              <div class="history-row">
+                <span class="history-label">הערות:</span>
+                <span>${item.notes1}</span>
+              </div>
+            ` : '';
+
+            let task2Html = '';
+            let notes2Html = '';
+            if (item.task2 && item.task2.trim() !== '') {
+              let time2 = (item.start2 || item.end2) ? `<span class="time-range">[${item.start2} - ${item.end2}]</span>` : '';
+              task2Html = `
+                <div class="history-row" style="margin-top: 4px;">
+                  <span class="history-label">משימה 2:</span>
+                  <strong>${item.task2}</strong>
+                  ${time2}
+                </div>
+              `;
+              if (item.notes2 && item.notes2.trim() !== '') {
+                notes2Html = `
+                  <div class="history-row">
+                    <span class="history-label">הערות:</span>
+                    <span>${item.notes2}</span>
+                  </div>
+                `;
+              }
+            }
+
+            let editBtnHtml = '';
+            if (item.canEdit) {
+              editBtnHtml = `<button class="btn-edit-pending" onclick='editPendingReport(${JSON.stringify(item)})'>תקן דיווח זה</button>`;
+            }
+
+            const cardHtml = `
+              <div class="history-card">
+                <div class="history-header">
+                  <strong>${item.date} (${item.day})</strong>
+                  <span class="badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div class="history-row">
+                  <span class="history-label">רכב:</span>
+                  <strong>${item.vehicle}</strong>
+                </div>
+                ${task1Html}
+                ${notes1Html}
+                ${task2Html}
+                ${notes2Html}
+                ${editBtnHtml}
+              </div>
+            `;
+            listContainer.innerHTML += cardHtml;
+          });
+        })
+        .catch(err => {
+          loading.style.display = "none";
+          listContainer.innerHTML = '<p style="color: var(--error-red); text-align: center;">שגיאה בטעינת היסטוריה</p>';
+        });
+    }
+
+    function editPendingReport(item) {
+      document.getElementById("report-id").value = item.id;
+
+      if (item.date.includes("/")) {
+        const p = item.date.split("/");
+        document.getElementById("report-date").value = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+      }
+
+      document.getElementById("report-vehicle").value = item.vehicle;
+      document.getElementById("report-task1").value = item.task1;
+      document.getElementById("report-start1").value = item.start1;
+      document.getElementById("report-end1").value = item.end1;
+      document.getElementById("report-notes1").value = item.notes1 || "";
+
+      if (item.task2) {
+        toggleTask2(true);
+        document.getElementById("report-task2").value = item.task2;
+        document.getElementById("report-start2").value = item.start2;
+        document.getElementById("report-end2").value = item.end2;
+        document.getElementById("report-notes2").value = item.notes2 || "";
+      } else {
+        toggleTask2(false);
+      }
+
+      switchTab('report');
+      updateClearButtons();
+      showToast("הדיווח נטען לעריכה");
+    }
+  </script>
+</body>
+</html>
